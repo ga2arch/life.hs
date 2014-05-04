@@ -1,10 +1,12 @@
+{-# LANGUAGE QuasiQuotes, TemplateHaskell, TypeFamilies #-}
+{-# LANGUAGE OverloadedStrings, GADTs, FlexibleContexts #-}
+
 module Main where
 
-import Control.Monad
-import Text.PrettyPrint.ANSI.Leijen
-import System.Console.ANSI
-import System.Random
-
+import Data.Text
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
 
 main :: IO ()
 main = undefined
