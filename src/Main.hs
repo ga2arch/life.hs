@@ -62,11 +62,10 @@ showCmd [] = do
         let (Commit content date day) = entityVal c
         M.insertWithKey u day [text.unpack $ content] m
     u _ nv ov = ov ++ nv
-    pp (day, commits) = do 
-        liftIO $ putDoc 
-                $ (text $ show day) 
-                <$$> (indent 1 $ vsep (map ((<+>) (dot <> space)) commits))
-                <$$> linebreak 
+    pp (day, commits) = liftIO $ putDoc $ mkDoc day commits
+    mkDoc day commits = (text $ show day) 
+        <$$> (indent 1 $ vsep (map ((<+>) (dot <> space)) commits))
+        <$$> linebreak 
 
 getTags :: CommitId -> String -> [Tag]
 getTags commitId content = do
