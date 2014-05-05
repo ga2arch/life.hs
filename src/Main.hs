@@ -17,8 +17,6 @@ import System.Environment
 
 import qualified Data.Map as M
 
---import Types
-
 share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
 Commit
     content  Text
@@ -38,19 +36,17 @@ main = runSqlite "life.db" $ do
 
     (cmd:args) <- liftIO getArgs
 
-    --let cmd = "show"
-    --let args = []
     case cmd of 
         "commit" -> commitCmd args
         "show"   -> showCmd args
-        _        -> liftIO $ putStrLn "no implemented"
+        _        -> liftIO $ putStrLn "not implemented"
 
 commitCmd (content:_) = do
     now <- liftIO $ getCurrentTime
     commitId <- insert $ Commit (pack content) now (utctDay now)
     mapM_ insert $ getTags commitId content
 
-showCmd [] = do
+showCmd _ = do
     commits <- select $ from 
         $ \(c :: SqlExpr (Entity Commit)) -> do 
             return c
@@ -64,7 +60,7 @@ showCmd [] = do
     u _ nv ov = ov ++ nv
     pp (day, commits) = liftIO $ putDoc $ mkDoc day commits
     mkDoc day commits = (text $ show day) 
-        <$$> (indent 1 $ vsep (map ((<+>) (dot <> space)) commits))
+        <$$> indent 1 (vsep $ map ((<+>) $ dot <> space) commits)
         <$$> linebreak 
 
 getTags :: CommitId -> String -> [Tag]
