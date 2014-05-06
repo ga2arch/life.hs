@@ -6,7 +6,7 @@ import Control.Applicative
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Data.Time
 import Data.Text (Text, pack, unpack)
-import Data.List (foldl', sortBy)
+import Data.List (foldl', reverse)
 import Data.List.Split
 import Database.Esqueleto
 import Database.Persist.Sqlite (runSqlite, runMigrationSilent)
@@ -63,7 +63,7 @@ showCmd _ = do
 
 deleteCmd (d:pos:_) = do
     m <- fmap groupCommitsByDate allCommits
-    let key = M.keys m !! (read d - 1)
+    let key = (reverse $ M.keys m) !! (read d - 1)
     let k = entityKey . fst $ (m M.! key) !! (read pos - 1)
 
     delete $ from $ \c -> do
