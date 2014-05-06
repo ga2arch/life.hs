@@ -1,5 +1,6 @@
-{-# LANGUAGE QuasiQuotes, TemplateHaskell, TypeFamilies #-}
+{-# LANGUAGE QuasiQuotes, TemplateHaskell, TypeFamilies, DeriveDataTypeable#-}
 {-# LANGUAGE OverloadedStrings, GADTs, FlexibleContexts, ScopedTypeVariables #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Main where
 
@@ -14,6 +15,7 @@ import Database.Persist.Sqlite (runSqlite, runMigrationSilent)
 import Database.Persist.TH
 import Text.PrettyPrint.ANSI.Leijen
 import System.Environment
+import System.Console.CmdArgs
 
 import qualified Data.Map as M
 
@@ -30,17 +32,24 @@ Tag
     deriving Show
 |]
 
+data Command = Command { 
+    cmd :: String 
+,   commandArgs :: [String]
+} deriving (Show, Data, Typeable)
+
 main :: IO ()
 main = runSqlite "life.db" $ do
     runMigrationSilent migrateTables
 
-    (cmd:args) <- liftIO getArgs
-
+    Command{..} <- liftIO $ cmdArgs $ Command {
+        cmd = def &= argPos 0 &= opt ("show" :: String)
+    ,   commandArgs = def &= args
+    }
     case cmd of 
-        "commit" -> commitCmd args
-        "show"   -> showCmd args
+        "commit" -> commitCmd commandArgs
+        "show"   -> showCmd commandArgs
         _        -> liftIO $ putStrLn "not implemented"
-
+  
 commitCmd (content:_) = do
     now <- liftIO $ getCurrentTime
     commitId <- insert $ Commit (pack content) now (utctDay now)
