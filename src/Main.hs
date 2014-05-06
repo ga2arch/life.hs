@@ -54,14 +54,12 @@ commitCmd (content:_) = do
 
 showCmd _ = do
     d <- fmap groupCommitsByDate allCommits
-    mapM_ pp $ sortBy s $ M.toList d
+    mapM_ pp $ M.toDescList d
   where
-    s (d1, _) (d2, _) = (flip compare) d1 d2
     pp (day, commits) = liftIO $ putDoc $ mkDoc day commits
     mkDoc day commits = (text $ show day) 
         <$$> indent 1 (vsep $ map (((<+>) $ dot <> space).snd) commits)
         <$$> linebreak 
-
 
 deleteCmd (d:pos:_) = do
     m <- fmap groupCommitsByDate allCommits
@@ -70,7 +68,6 @@ deleteCmd (d:pos:_) = do
 
     delete $ from $ \c -> do
         where_ (c ^. CommitId ==. val k)
-
 
 getTags :: CommitId -> String -> [Tag]
 getTags commitId content = do
