@@ -12,33 +12,18 @@ import Data.List (foldl')
 import Data.List.Split
 import Database.Esqueleto
 import Database.Persist.Sqlite (runSqlite, runMigrationSilent)
-import Database.Persist.TH
 import Text.PrettyPrint.ANSI.Leijen
 import System.Environment
 import System.Console.CmdArgs
 
 import qualified Data.Map as M
 
-share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
-Commit
-    content  Text
-    date     UTCTime
-    day      Day
-    deriving Show
+import Types
 
-Tag
-    name    Text
-    commit  CommitId
-    deriving Show
-|]
-
-data Command = Command { 
-    cmd :: String 
-,   commandArgs :: [String]
-} deriving (Show, Data, Typeable)
+database = "life.db"
 
 main :: IO ()
-main = runSqlite "life.db" $ do
+main = runSqlite database $ do
     runMigrationSilent migrateTables
 
     Command{..} <- liftIO $ cmdArgs $ Command {
