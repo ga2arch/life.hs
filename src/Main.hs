@@ -6,7 +6,7 @@ import Control.Applicative
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Data.Time
 import Data.Text (Text, pack, unpack)
-import Data.List (foldl')
+import Data.List (foldl', sortBy)
 import Data.List.Split
 import Database.Esqueleto
 import Database.Persist.Sqlite (runSqlite, runMigrationSilent)
@@ -44,7 +44,7 @@ groupCommitsByDate = foldl' f M.empty
     u _ nv ov = ov ++ nv
 
 allCommits = select $ 
-    from $ \(c :: SqlExpr (Entity Commit)) -> do 
+    from $ \(c :: SqlExpr (Entity Commit)) -> do
         return c
 
 commitCmd (content:_) = do
@@ -54,12 +54,14 @@ commitCmd (content:_) = do
 
 showCmd _ = do
     d <- fmap groupCommitsByDate allCommits
-    mapM_ pp $ M.toList d
+    mapM_ pp $ sortBy s $ M.toList d
   where
+    s (d1, _) (d2, _) = (flip compare) d1 d2
     pp (day, commits) = liftIO $ putDoc $ mkDoc day commits
     mkDoc day commits = (text $ show day) 
         <$$> indent 1 (vsep $ map (((<+>) $ dot <> space).snd) commits)
         <$$> linebreak 
+
 
 deleteCmd (d:pos:_) = do
     m <- fmap groupCommitsByDate allCommits
