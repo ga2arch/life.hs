@@ -29,31 +29,46 @@ main = runSqlite database $ do
     ,   commandArgs = def &= args
     }
     case cmd of 
-        "commit" -> commitCmd commandArgs
+        "commit" -> commitCmd commandArgs >> showCmd []
         "show"   -> showCmd commandArgs
+        "delete" -> deleteCmd commandArgs >> showCmd []
         _        -> liftIO $ putStrLn "not implemented"
   
+
+groupCommitsByDate = foldl' f M.empty
+  where
+    f m c = do
+        let (Commit content date day) = entityVal c
+        M.insertWithKey u day [(c, text.unpack $ content)] m
+
+    u _ nv ov = ov ++ nv
+
+allCommits = select $ 
+    from $ \(c :: SqlExpr (Entity Commit)) -> do 
+        return c
+
 commitCmd (content:_) = do
     now <- liftIO $ getCurrentTime
     commitId <- insert $ Commit (pack content) now (utctDay now)
     mapM_ insert $ getTags commitId content
 
 showCmd _ = do
-    commits <- select $ from 
-        $ \(c :: SqlExpr (Entity Commit)) -> do 
-            return c
-
-    let d = foldl' f M.empty commits
+    d <- fmap groupCommitsByDate allCommits
     mapM_ pp $ M.toList d
   where
-    f m c = do
-        let (Commit content date day) = entityVal c
-        M.insertWithKey u day [text.unpack $ content] m
-    u _ nv ov = ov ++ nv
     pp (day, commits) = liftIO $ putDoc $ mkDoc day commits
     mkDoc day commits = (text $ show day) 
-        <$$> indent 1 (vsep $ map ((<+>) $ dot <> space) commits)
+        <$$> indent 1 (vsep $ map (((<+>) $ dot <> space).snd) commits)
         <$$> linebreak 
+
+deleteCmd (d:pos:_) = do
+    m <- fmap groupCommitsByDate allCommits
+    let key = M.keys m !! (read d - 1)
+    let k = entityKey . fst $ (m M.! key) !! (read pos - 1)
+
+    delete $ from $ \c -> do
+        where_ (c ^. CommitId ==. val k)
+
 
 getTags :: CommitId -> String -> [Tag]
 getTags commitId content = do
