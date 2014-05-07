@@ -7,6 +7,7 @@ import Control.Monad.IO.Class (liftIO, MonadIO)
 import Data.Time
 import Data.Text (Text, pack, unpack)
 import Data.List (foldl', reverse)
+import Data.MultiSet (toOccurList, fromList)
 import Data.String.Utils
 import Database.Esqueleto
 import Database.Persist.Sqlite (runSqlite, runMigrationSilent)
@@ -78,12 +79,14 @@ deleteCmd (d:pos:_) = do
 
 tagsCmd = do
     t <- allTags
-    liftIO . putDoc . mkDoc $ map (text.unpack.tagName.entityVal) t
+    liftIO . putDoc . mkDoc . freq $ map (unpack.tagName.entityVal) t
   where
+    freq = toOccurList . fromList 
+    pp (tag, frequencie) = (text tag) <+> (text $ show frequencie)
     mkDoc tags = do
         (text "Tags")
         <>   linebreak
-        <$$> vsep tags
+        <$$> vsep (map pp tags)
         <>   linebreak
 
 getTags :: CommitId -> String -> [Tag]
