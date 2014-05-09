@@ -82,7 +82,11 @@ tagsCmd = do
     liftIO . putDoc . mkDoc . freq $ map (unpack.tagName.entityVal) t
   where
     freq = toOccurList . fromList 
-    pp (tag, frequencie) = (text tag) <+> (text $ show frequencie)
+    pp (tag, frequency) = (text tag) 
+                        <+> ondullred (text $ 
+                            concat $ 
+                            take frequency $ 
+                            repeat "   ")
     mkDoc tags = do
         (text "Tags")
         <>   linebreak
