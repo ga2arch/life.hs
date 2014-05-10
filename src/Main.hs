@@ -45,6 +45,13 @@ groupCommitsByDate = foldl' f M.empty
 
     u _ nv ov = ov ++ nv
 
+groupTagsByDay = foldl' f M.empty
+  where
+    f m (Value tag, Value day) = do
+        M.insertWithKey u day [(tag, text.unpack $ tag)] m
+
+    u _ nv ov = ov ++ nv
+
 allCommits = select $ 
     from $ \(c :: SqlExpr (Entity Commit)) -> do
         return c
@@ -79,16 +86,12 @@ deleteCmd (d:pos:_) = do
         where_ (c ^. CommitId ==. val k)
 
 tagsCmd = do
-    t <- allTags
-    liftIO . putDoc . mkDoc $ freq t
+    tags <- fmap groupTagsByDay allTags
+    liftIO . putDoc $ mkDoc tags
   where
-    freq = toOccurList . fromList 
-    pp ((Value tag, Value day), frequency) = do
+    pp (Value tag, Value day) = do
         let (y, m, _) = toGregorian day
         let days = [1..gregorianMonthLength y m]
-
-        let t = text $ unpack tag
-        let s = text $ concat $ take frequency $ repeat ("   ")
 
         t <+> ondullred s
 
