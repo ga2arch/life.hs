@@ -83,12 +83,15 @@ tagsCmd = do
     liftIO . putDoc . mkDoc $ freq t
   where
     freq = toOccurList . fromList 
-    pp ((Value tag, Value day), frequency) = 
-        (text $ unpack tag) 
-        <+> ondullred (text $ 
-            concat $ 
-            take frequency $ 
-            repeat "   ")
+    pp ((Value tag, Value day), frequency) = do
+        let (y, m, _) = toGregorian day
+        let days = [1..gregorianMonthLength y m]
+
+        let t = text $ unpack tag
+        let s = text $ concat $ take frequency $ repeat ("   ")
+
+        t <+> ondullred s
+
     mkDoc tags = do
         (text "Tags")
         <>   linebreak
