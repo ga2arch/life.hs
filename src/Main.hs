@@ -56,9 +56,7 @@ allTags = select $
 commitCmd (content:_) = do
     now <- liftIO $ getCurrentTime
     commitId <- insert $ Commit (pack content) now (utctDay now)
-    let tags = getTags commitId content
-    liftIO $ print tags
-    mapM_ insert tags
+    mapM_ insert $ getTags commitId content
 
 showCmd _ = do
     d <- fmap groupCommitsByDate allCommits
