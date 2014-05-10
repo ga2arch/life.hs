@@ -50,8 +50,11 @@ allCommits = select $
         return c
 
 allTags = select $ 
-    from $ \(t :: SqlExpr (Entity Tag)) -> do
-        return t
+    from $ \((t :: SqlExpr (Entity Tag)) 
+            `InnerJoin` 
+             (c :: SqlExpr (Entity Commit))) -> do
+        on (t ^. TagCommit ==. c ^. CommitId)
+        return (t ^. TagName, c ^. CommitDay)
 
 commitCmd (content:_) = do
     now <- liftIO $ getCurrentTime
@@ -77,14 +80,15 @@ deleteCmd (d:pos:_) = do
 
 tagsCmd = do
     t <- allTags
-    liftIO . putDoc . mkDoc . freq $ map (unpack.tagName.entityVal) t
+    liftIO . putDoc . mkDoc $ freq t
   where
     freq = toOccurList . fromList 
-    pp (tag, frequency) = (text tag) 
-                        <+> ondullred (text $ 
-                            concat $ 
-                            take frequency $ 
-                            repeat "   ")
+    pp ((Value tag, Value day), frequency) = 
+        (text $ unpack tag) 
+        <+> ondullred (text $ 
+            concat $ 
+            take frequency $ 
+            repeat "   ")
     mkDoc tags = do
         (text "Tags")
         <>   linebreak
