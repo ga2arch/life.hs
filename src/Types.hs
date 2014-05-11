@@ -22,11 +22,13 @@ Commit
     date     UTCTime
     day      Day
     deriving Show
+    deriving Eq
 
 Tag
     name    Text
     commit  CommitId
     deriving Show
+    deriving Eq
 |]
 
 

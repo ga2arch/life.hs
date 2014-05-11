@@ -89,7 +89,7 @@ tagsCmd = do
     tags <- fmap groupTagsByDay allTags
     liftIO . putDoc $ mkDoc tags
   where
-    pp (Value tag, Value day) = do
+    pp (tag, days) = do
         let (y, m, _) = toGregorian day
         let days = [1..gregorianMonthLength y m]
 
